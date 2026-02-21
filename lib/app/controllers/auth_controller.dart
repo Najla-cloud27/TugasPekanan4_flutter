@@ -1,51 +1,82 @@
-import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 
 class AuthController extends GetxController {
-  FirebaseAuth auth = FirebaseAuth.instance;
-
-  var isLoading = false.obs;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // SIGN UP
-  void signup(String email, String password) async {
+  Future<void> signup(String email, String password) async {
     try {
-      isLoading.value = true;
+      // 1. Membuat akun baru
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
-      await auth.createUserWithEmailAndPassword(
+      // 2. Kirim email verifikasi
+      await userCredential.user!.sendEmailVerification();
+
+      // 3. Notifikasi ke user
+      Get.defaultDialog(
+        title: "Berhasil",
+        middleText: "Cek email kamu untuk verifikasi akun",
+      );
+
+      // 4. Arahkan ke login
+      Get.offAllNamed('/login');
+    } catch (e) {
+      Get.defaultDialog(title: "Error", middleText: e.toString());
+    }
+  }
+
+  //  LOGIN
+  Future<void> login(String email, String password) async {
+    try {
+      // 1. Login user
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      Get.snackbar("Success", "Akun berhasil dibuat");
-      Get.offAllNamed('/home');
+      User? user = userCredential.user;
+
+      // 2. WAJIB reload
+      await user!.reload();
+      user = _auth.currentUser;
+
+      // 3. Cek verifikasi
+      if (user!.emailVerified) {
+        Get.offAllNamed('/home');
+      } else {
+        Get.defaultDialog(
+          title: "Email Belum Verifikasi",
+          middleText: "Silakan cek email kamu dulu",
+        );
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
-      isLoading.value = false;
+      Get.defaultDialog(title: "Error", middleText: e.toString());
     }
   }
 
-  // LOGIN
-  void login(String email, String password) async {
+  //  RESEND
+  Future<void> resendVerification() async {
     try {
-      isLoading.value = true;
+      User? user = _auth.currentUser;
 
-      await auth.signInWithEmailAndPassword(email: email, password: password);
+      if (user != null) {
+        await user.sendEmailVerification();
 
-      Get.snackbar("Success", "Login berhasil");
-      Get.offAllNamed('/home');
+        Get.defaultDialog(
+          title: "Berhasil",
+          middleText: "Email verifikasi dikirim ulang",
+        );
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
-      isLoading.value = false;
+      Get.defaultDialog(title: "Error", middleText: e.toString());
     }
   }
 
   // LOGOUT
-  void logout() async {
-    // untuk keluar akun
-    await auth.signOut();
-    // balik ke login
+  Future<void> logout() async {
+    await _auth.signOut();
     Get.offAllNamed('/login');
   }
 }

@@ -15,23 +15,50 @@ class LoginView extends StatelessWidget {
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            //  EMAIL
             TextField(
               controller: emailC,
-              decoration: InputDecoration(labelText: "Email"),
+              decoration: InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
             ),
+
+            SizedBox(height: 15),
+
+            //  PASSWORD
             TextField(
               controller: passC,
               obscureText: true,
-              decoration: InputDecoration(labelText: "Password"),
+              decoration: InputDecoration(
+                labelText: "Password",
+                border: OutlineInputBorder(),
+              ),
             ),
+
             SizedBox(height: 20),
+
+            //  LOGIN BUTTON
             ElevatedButton(
               onPressed: () {
-                authC.login(emailC.text, passC.text);
+                authC.login(emailC.text.trim(), passC.text.trim());
               },
               child: Text("Login"),
             ),
+
+            SizedBox(height: 10),
+
+            //  RESEND EMAIL
+            TextButton(
+              onPressed: () {
+                authC.resendVerification();
+              },
+              child: Text("Kirim ulang email verifikasi"),
+            ),
+
+            //  PINDAH KE SIGNUP
             TextButton(
               onPressed: () => Get.toNamed('/signup'),
               child: Text("Belum punya akun? Signup"),
